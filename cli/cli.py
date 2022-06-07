@@ -1,0 +1,53 @@
+import click
+from pyfiglet import Figlet
+import os
+from os.path import expanduser
+
+from config.config import Config
+from tracking.anonymous_tracking import AnonymousTracking, track_cli_help
+
+f = Figlet(font='slant')
+print(f.renderText('Datametry'))
+
+root_folder = os.path.join(os.path.dirname(__file__), '..')
+modules = ['lineage', 'monitor']
+
+
+class DatametryCLI(click.MultiCommand):
+
+    def list_commands(self, ctx):
+        rv = []
+        for module in modules:
+            rv.append(module)
+        rv.sort()
+        return rv
+
+    def get_command(self, ctx, name):
+        ns = {}
+        fn = os.path.join(root_folder, name, 'cli.py')
+        try:
+            with open(fn) as f:
+                code = compile(f.read(), fn, 'exec')
+                eval(code, ns, ns)
+        except Exception:
+            return None
+        return ns[name]
+
+    def format_help(self, ctx, formatter):
+        try:
+            config = Config(config_dir=os.path.join(expanduser('~'), '.edr'),
+                            profiles_dir=os.path.join(expanduser('~'), '.sh'))
+            anonymous_tracking = AnonymousTracking(config)
+            track_cli_help(anonymous_tracking)
+        except Exception:
+            pass
+        self.format_usage(ctx, formatter)
+        self.format_help_text(ctx, formatter)
+        self.format_options(ctx, formatter)
+        self.format_epilog(ctx, formatter)
+
+
+cli = DatametryCLI(help='Data Observability Platform')
+
+if __name__ == '__main__':
+    cli()
