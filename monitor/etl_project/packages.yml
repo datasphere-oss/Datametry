@@ -1,0 +1,5 @@
+packages:
+  - package: etl-labs/etl_utils
+    version: [">=0.8.0", "<0.9.0"]
+  - package: datametry/datametry
+    version: 0.0.1
